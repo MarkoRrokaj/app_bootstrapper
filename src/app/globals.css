@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+#section input:checked ~ .collapse-title {
+  color: hsl(161.3, 93.2%, 34.5%);
+}
