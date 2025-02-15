@@ -69,7 +69,7 @@ export default function Hero() {
               </div>
               <div className="text-base text-base-content/80">
                 <span className="font-semibold text-base-content">50</span>{" "}
-                Founders sleep better!
+                Condo happy owners!
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 export default function FAQ() {
   return (
-    <div className="py-24 px-8 max-w-7xl mx-auto">
+    <div className="py-24 px-8 max-w-7xl mx-auto" id="faq">
       <div className="flex flex-col md:flex-row gap-12">
         <div className="flex flex-col text-left basis-1/2">
           <p class="inline-block font-semibold text-accent mb-4">FAQ</p>

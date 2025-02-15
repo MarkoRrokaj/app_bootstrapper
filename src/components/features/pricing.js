@@ -1,6 +1,9 @@
 export default function Pricing() {
   return (
-    <div className="flex flex-col items-center bg-gray-100 min-h-screen p-8">
+    <div
+      className="flex flex-col items-center bg-gray-100 min-h-screen p-8"
+      id="pricing"
+    >
       <div className="badge badge-primary mb-4 m-8">
         ✨ Launch discount — $50 OFF ✨
       </div>

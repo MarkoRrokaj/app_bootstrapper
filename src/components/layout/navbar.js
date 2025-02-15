@@ -20,7 +20,7 @@ export default function Navbar() {
                 />
               </svg>
             </div>
-            <ul
+            {/* <ul
               tabIndex={0}
               className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
             >
@@ -33,7 +33,7 @@ export default function Navbar() {
               <li>
                 <a>FAQ</a>
               </li>
-            </ul>
+            </ul> */}
           </div>
           <a className="btn btn-ghost text-xl">daisyUI</a>
         </div>
@@ -43,15 +43,20 @@ export default function Navbar() {
               <a>Reviews</a>
             </li>
             <li>
-              <a>Pricing</a>
+              <a href="#pricing">Pricing</a>
             </li>
             <li>
-              <a>FAQ</a>
+              <a href="#faq">FAQ</a>
             </li>
           </ul>
         </div>
         <div className="navbar-end">
-          <a className="btn btn-soft">Log in</a>
+          <a className="btn btn-soft" href="/login">
+            Log In
+          </a>
+          <a className="btn btn-soft" href="/signin">
+            Sign In
+          </a>
         </div>
       </div>
     </div>
