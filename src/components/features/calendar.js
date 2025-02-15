@@ -9,13 +9,17 @@ import { XCircleIcon } from "@heroicons/react/24/solid";
 const SharedCalendar = () => {
   const [date, setDate] = useState(new Date());
   const [eventText, setEventText] = useState("");
-  const [events, setEvents] = useState(() => {
-    const storedEvents = JSON.parse(localStorage.getItem("sharedEvents")) || [];
-    return storedEvents.sort((a, b) =>
-      compareAsc(parseISO(a.date), parseISO(b.date))
-    ); // Sort on load
-  });
+  const [events, setEvents] = useState([]);
   const [visibleCount, setVisibleCount] = useState(5); // Control how many events to show
+
+  useEffect(() => {
+    const storedEvents = JSON.parse(localStorage.getItem("sharedEvents")) || [];
+    setEvents(
+      storedEvents.sort((a, b) =>
+        compareAsc(parseISO(a.date), parseISO(b.date))
+      )
+    ); // Sort on load
+  }, []);
 
   const handleDateChange = (newDate) => {
     setDate(newDate);
