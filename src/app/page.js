@@ -13,10 +13,6 @@ export default function HomePage() {
       <Hero />
       <Section />
       <Pricing />
-      <DocumentUploader />
-      <Poll />
-      <InterventionRequest />
-      <SharedCalendar />
       <FAQ />
     </main>
   );

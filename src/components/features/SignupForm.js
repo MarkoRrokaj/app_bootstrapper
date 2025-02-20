@@ -2,28 +2,41 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "@/app/firebase/config";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, firestore } from "@/app/firebase/config";
 
-const SignupForm = () => {
+export default function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("basic"); // Default role
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // Handle email/password signup
+  async function storeUserInFirestore(uid, email, role) {
+    try {
+      await setDoc(doc(firestore, "users", uid), {
+        email,
+        role: role === "admin" ? "pending" : "basic", // Admins start as "pending"
+        createdAt: new Date(),
+      });
+      console.log("User stored in Firestore successfully.");
+    } catch (error) {
+      console.error("Error storing user in Firestore:", error);
+    }
+  }
+
   const handleEmailSignup = async (e) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
     try {
-      // Create new user with email and password
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -31,32 +44,25 @@ const SignupForm = () => {
       );
       console.log("User created successfully:", userCredential.user.email);
 
-      // Clear form and redirect
-      setEmail("");
-      setPassword("");
-      router.push("/");
-    } catch (err) {
-      console.error("Signup error:", err.code, err.message);
-      // Handle specific error cases
-      switch (err.code) {
-        case "auth/email-already-in-use":
-          setError("An account already exists with this email.");
-          break;
-        case "auth/invalid-email":
-          setError("Please enter a valid email address.");
-          break;
-        case "auth/weak-password":
-          setError("Password should be at least 6 characters long.");
-          break;
-        default:
-          setError("Failed to create account. Please try again.");
+      await storeUserInFirestore(
+        userCredential.user.uid,
+        userCredential.user.email,
+        role
+      );
+
+      if (role === "admin") {
+        router.push("/payment"); // Redirect to payment page
+      } else {
+        router.push("/");
       }
+    } catch (err) {
+      console.log("Signup error:", err.code, err.message);
+      setError("Failed to create account. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle Google signup
   const handleGoogleSignup = async () => {
     setError(null);
     setIsLoading(true);
@@ -65,7 +71,14 @@ const SignupForm = () => {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       console.log("Google signup successful:", result.user.email);
-      router.push("/");
+
+      await storeUserInFirestore(result.user.uid, result.user.email, role);
+
+      if (role === "admin") {
+        router.push("/payment");
+      } else {
+        router.push("/");
+      }
     } catch (err) {
       console.error("Google signup error:", err);
       setError("Failed to sign up with Google. Please try again.");
@@ -75,81 +88,85 @@ const SignupForm = () => {
   };
 
   return (
-    <div className="max-w-sm mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold text-center mb-6">Create Account</h2>
+    <div className="flex justify-center items-center min-h-screen bg-base-200">
+      <div className="card w-full max-w-md shadow-xl bg-base-100 p-8">
+        <h2 className="text-2xl font-bold text-center mb-4">Sign Up</h2>
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
-
-      <button
-        onClick={handleGoogleSignup}
-        disabled={isLoading}
-        className="w-full py-2 px-4 mb-6 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2"
-      >
-        {isLoading ? "Creating account..." : "Sign up with Google"}
-      </button>
-
-      <div className="relative mb-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300"></div>
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-gray-500">Or with email</span>
-        </div>
-      </div>
-
-      <form onSubmit={handleEmailSignup}>
-        <div className="mb-4">
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Email Address
-          </label>
+        <form onSubmit={handleEmailSignup} className="space-y-4">
           <input
             type="email"
-            id="email"
+            placeholder="Email"
+            className="input input-bordered w-full"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="you@example.com"
             required
-            disabled={isLoading}
           />
-        </div>
-
-        <div className="mb-6">
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Password
-          </label>
           <input
             type="password"
-            id="password"
+            placeholder="Password"
+            className="input input-bordered w-full"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="At least 6 characters"
             required
-            disabled={isLoading}
           />
-        </div>
+
+          {/* Role Selection */}
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="role"
+                value="basic"
+                className="radio radio-primary"
+                checked={role === "basic"}
+                onChange={() => setRole("basic")}
+              />
+              <span>Basic User</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="role"
+                value="admin"
+                className="radio radio-accent"
+                checked={role === "admin"}
+                onChange={() => setRole("admin")}
+              />
+              <span>Admin (requires payment)</span>
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            className="btn btn-primary w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <span className="loading loading-spinner"></span>
+            ) : (
+              "Sign Up"
+            )}
+          </button>
+        </form>
+
+        <div className="divider">OR</div>
 
         <button
-          type="submit"
+          onClick={handleGoogleSignup}
+          className="btn btn-outline w-full"
           disabled={isLoading}
-          className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
-          {isLoading ? "Creating account..." : "Create Account"}
+          {isLoading ? (
+            <span className="loading loading-spinner"></span>
+          ) : (
+            "Sign Up with Google"
+          )}
         </button>
-      </form>
+
+        {error && (
+          <p className="text-red-500 text-sm text-center mt-2">{error}</p>
+        )}
+      </div>
     </div>
   );
-};
-
-export default SignupForm;
+}

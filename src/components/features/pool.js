@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 
-const Poll = () => {
+const Pool = () => {
   const [pollOptions, setPollOptions] = useState([]);
   const [newOption, setNewOption] = useState("");
   const [votes, setVotes] = useState({});
-  const [userVote, setUserVote] = useState(null); // Tracks user's current vote
+  const [userVote, setUserVote] = useState(null);
 
-  // Add option to the poll
   const addOption = () => {
     if (newOption.trim() && !pollOptions.includes(newOption)) {
       setPollOptions([...pollOptions, newOption]);
@@ -17,29 +16,22 @@ const Poll = () => {
     }
   };
 
-  // Vote for an option (allows switching votes)
   const vote = (option) => {
     setVotes((prevVotes) => {
       const updatedVotes = { ...prevVotes };
-
-      // Remove previous vote if user had one
       if (userVote) {
         updatedVotes[userVote] -= 1;
       }
-
-      // Add vote to new option
       updatedVotes[option] += 1;
       return updatedVotes;
     });
 
-    setUserVote(option); // Update user's current vote
+    setUserVote(option);
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-10 p-6 bg-base-200 shadow-xl rounded-lg">
+    <div className="max-w-lg mx-auto mt-10 p-6 bg-base-200 rounded-lg">
       <h2 className="text-2xl font-bold text-center mb-4">Create a Poll</h2>
-
-      {/* Input field for new poll option */}
       <div className="flex gap-2">
         <input
           type="text"
@@ -53,7 +45,6 @@ const Poll = () => {
         </button>
       </div>
 
-      {/* Display poll options */}
       {pollOptions.length > 0 && (
         <div className="mt-6">
           <h3 className="text-xl font-semibold mb-2">Vote for an option:</h3>
@@ -76,7 +67,6 @@ const Poll = () => {
         </div>
       )}
 
-      {/* Show a message if user has voted */}
       {userVote && (
         <p className="text-center text-warning mt-4">
           You voted for: <span className="font-bold">{userVote}</span>.{" "}
@@ -87,4 +77,4 @@ const Poll = () => {
   );
 };
 
-export default Poll;
+export default Pool;

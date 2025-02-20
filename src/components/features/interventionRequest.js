@@ -36,7 +36,7 @@ const InterventionRequest = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-10 p-6 bg-base-200 shadow-xl rounded-lg">
+    <div className="max-w-lg mx-auto mt-10 p-6 bg-base-200 rounded-lg">
       <h2 className="text-2xl font-bold text-center mb-4">
         Intervention Request
       </h2>
