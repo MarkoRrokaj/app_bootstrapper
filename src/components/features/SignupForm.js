@@ -13,19 +13,22 @@ import { auth, firestore } from "@/app/firebase/config";
 export default function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("basic"); // Default role
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  async function storeUserInFirestore(uid, email, role) {
+  async function storeUserInFirestore(uid, email) {
     try {
-      await setDoc(doc(firestore, "users", uid), {
+      const userRef = doc(firestore, "users", uid);
+
+      // Store user details
+      await setDoc(userRef, {
         email,
-        role: role === "admin" ? "pending" : "basic", // Admins start as "pending"
         createdAt: new Date(),
       });
+
       console.log("User stored in Firestore successfully.");
+      // No need to create empty condos document - it will be created when the user adds their first condo
     } catch (error) {
       console.error("Error storing user in Firestore:", error);
     }
@@ -46,15 +49,9 @@ export default function SignupForm() {
 
       await storeUserInFirestore(
         userCredential.user.uid,
-        userCredential.user.email,
-        role
+        userCredential.user.email
       );
-
-      if (role === "admin") {
-        router.push("/payment"); // Redirect to payment page
-      } else {
-        router.push("/");
-      }
+      router.push("/admin");
     } catch (err) {
       console.log("Signup error:", err.code, err.message);
       setError("Failed to create account. Please try again.");
@@ -72,13 +69,8 @@ export default function SignupForm() {
       const result = await signInWithPopup(auth, provider);
       console.log("Google signup successful:", result.user.email);
 
-      await storeUserInFirestore(result.user.uid, result.user.email, role);
-
-      if (role === "admin") {
-        router.push("/payment");
-      } else {
-        router.push("/");
-      }
+      await storeUserInFirestore(result.user.uid, result.user.email);
+      router.push("/admin");
     } catch (err) {
       console.error("Google signup error:", err);
       setError("Failed to sign up with Google. Please try again.");
@@ -109,32 +101,6 @@ export default function SignupForm() {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-
-          {/* Role Selection */}
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="role"
-                value="basic"
-                className="radio radio-primary"
-                checked={role === "basic"}
-                onChange={() => setRole("basic")}
-              />
-              <span>Basic User</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="role"
-                value="admin"
-                className="radio radio-accent"
-                checked={role === "admin"}
-                onChange={() => setRole("admin")}
-              />
-              <span>Admin (requires payment)</span>
-            </label>
-          </div>
 
           <button
             type="submit"

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "@/app/firebase/config";
+import { auth, firestore } from "@/app/firebase/config";
+import { doc, getDoc } from "firebase/firestore";
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
@@ -15,6 +16,35 @@ const LoginForm = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  // Function to check if user has admin role
+  const checkAdminRole = async (userId) => {
+    try {
+      const userDocRef = doc(firestore, "users", userId);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists() && userDoc.data().role === "admin") {
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Error checking admin role:", err);
+      return false;
+    }
+  };
+
+  // Handle routing based on user role
+  const handleRouteAfterLogin = async (user) => {
+    const isAdmin = await checkAdminRole(user.uid);
+
+    if (isAdmin) {
+      router.push("/admin");
+    } else {
+      setError("Access denied. You do not have admin privileges.");
+      // Optionally redirect non-admin users to a different page
+      //router.push("/");
+    }
+  };
 
   // Handle email/password login
   const handleEmailLogin = async (e) => {
@@ -30,10 +60,12 @@ const LoginForm = () => {
       );
       console.log("Login successful:", userCredential.user.email);
 
-      // Clear form and redirect
+      // Clear form
       setEmail("");
       setPassword("");
-      router.push("/");
+
+      // Check role and route accordingly
+      await handleRouteAfterLogin(userCredential.user);
     } catch (err) {
       console.error("Login error:", err.code, err.message);
       // Handle specific error cases
@@ -67,7 +99,9 @@ const LoginForm = () => {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       console.log("Google login successful:", result.user.email);
-      router.push("/");
+
+      // Check role and route accordingly
+      await handleRouteAfterLogin(result.user);
     } catch (err) {
       console.error("Google login error:", err);
       setError("Failed to sign in with Google. Please try again.");
@@ -117,7 +151,7 @@ const LoginForm = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="you@example.com"
+            placeholder="email@example.com"
             required
             disabled={isLoading}
           />
