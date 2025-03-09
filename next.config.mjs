@@ -1,10 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "export",
-  distDir: "out",
-  images: { unoptimized: true },
-  basePath: "/app_bootstrapper", // Ensures routing works correctly
-  assetPrefix: "/app_bootstrapper/", // Ensures assets load properly
+  // Add your config options here
 };
 
 export default nextConfig;
