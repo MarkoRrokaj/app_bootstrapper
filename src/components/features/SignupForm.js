@@ -21,14 +21,13 @@ export default function SignupForm() {
     try {
       const userRef = doc(firestore, "users", uid);
 
-      // Store user details
+      // Store user details (just email now)
       await setDoc(userRef, {
         email,
         createdAt: new Date(),
       });
 
       console.log("User stored in Firestore successfully.");
-      // No need to create empty condos document - it will be created when the user adds their first condo
     } catch (error) {
       console.error("Error storing user in Firestore:", error);
     }

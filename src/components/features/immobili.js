@@ -8,8 +8,6 @@ import {
   deleteDoc,
   doc,
   serverTimestamp,
-  query,
-  where,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth, firestore } from "@/app/firebase/config";
@@ -19,7 +17,6 @@ const Immobili = () => {
   const [immobili, setImmobili] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newCondo, setNewCondo] = useState({
-    init: "",
     type: "",
     address: "",
     cap: "",
@@ -42,14 +39,10 @@ const Immobili = () => {
         setLoading(true);
 
         const condosRef = collection(firestore, `users/${user.uid}/condos`);
-        // Optional: Skip the metadata document if it exists
-        // const condosQuery = query(condosRef, where("__name__", "!=", "_metadata"));
-        // const querySnapshot = await getDocs(condosQuery);
-
         const querySnapshot = await getDocs(condosRef);
 
         const condosList = querySnapshot.docs
-          .filter((doc) => doc.id !== "_metadata") // Filter out metadata doc if it exists
+          .filter((doc) => doc.id !== "_metadata")
           .map((doc) => ({
             id: doc.id,
             ...doc.data(),
@@ -71,7 +64,22 @@ const Immobili = () => {
   }, [user]);
 
   const addCondo = async () => {
-    if (!newCondo.address.trim() || !user) return;
+    // Check that all fields are filled
+    if (
+      !newCondo.type ||
+      !newCondo.address ||
+      !newCondo.cap ||
+      !newCondo.city ||
+      !newCondo.region ||
+      !newCondo.fiscal_code ||
+      newCondo.fiscal_code.length !== 11 ||
+      isNaN(newCondo.cap) ||
+      isNaN(newCondo.fiscal_code)
+    ) {
+      alert("Please fill in all fields correctly.");
+      return;
+    }
+
     try {
       const condoData = {
         ...newCondo,
@@ -81,7 +89,6 @@ const Immobili = () => {
       const docRef = await addDoc(userCondosRef, condoData);
       setImmobili([...immobili, { id: docRef.id, ...condoData }]);
       setNewCondo({
-        init: "",
         type: "",
         address: "",
         cap: "",
@@ -110,13 +117,6 @@ const Immobili = () => {
         Manage Immobili (Condos)
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <input
-          type="text"
-          className="input input-bordered w-full"
-          placeholder="Init"
-          value={newCondo.init}
-          onChange={(e) => setNewCondo({ ...newCondo, init: e.target.value })}
-        />
         <select
           className="input input-bordered w-full"
           value={newCondo.type}
@@ -144,15 +144,17 @@ const Immobili = () => {
             setNewCondo({ ...newCondo, address: e.target.value })
           }
         />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <input
           type="text"
           className="input input-bordered w-full"
           placeholder="CAP (Postal Code)"
           value={newCondo.cap}
           onChange={(e) => setNewCondo({ ...newCondo, cap: e.target.value })}
+          maxLength={5}
+          pattern="\d*"
         />
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <input
           type="text"
           className="input input-bordered w-full"
@@ -167,16 +169,18 @@ const Immobili = () => {
           value={newCondo.region}
           onChange={(e) => setNewCondo({ ...newCondo, region: e.target.value })}
         />
+        <input
+          type="text"
+          className="input input-bordered w-full"
+          placeholder="Fiscal Code (11 digits)"
+          value={newCondo.fiscal_code}
+          onChange={(e) =>
+            setNewCondo({ ...newCondo, fiscal_code: e.target.value })
+          }
+          maxLength={11}
+          pattern="\d*"
+        />
       </div>
-      <input
-        type="text"
-        className="input input-bordered w-full mb-4"
-        placeholder="Fiscal Code"
-        value={newCondo.fiscal_code}
-        onChange={(e) =>
-          setNewCondo({ ...newCondo, fiscal_code: e.target.value })
-        }
-      />
       <button className="btn btn-primary w-full md:w-auto" onClick={addCondo}>
         Add Condo
       </button>
@@ -190,7 +194,6 @@ const Immobili = () => {
           <table className="table w-full">
             <thead>
               <tr>
-                <th>Init</th>
                 <th>Type</th>
                 <th>Address</th>
                 <th>Actions</th>
@@ -200,9 +203,12 @@ const Immobili = () => {
               {immobili.length > 0 ? (
                 immobili.map((condo) => (
                   <tr key={condo.id}>
-                    <td>{condo.init}</td>
                     <td>{condo.type}</td>
                     <td>{condo.address}</td>
+                    <td>{condo.cap}</td>
+                    <td>{condo.city}</td>
+                    <td>{condo.region}</td>
+                    <td>{condo.fiscal_code}</td>
                     <td>
                       <button
                         className="btn btn-error btn-sm"
@@ -215,7 +221,7 @@ const Immobili = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" className="text-center">
+                  <td colSpan="3" className="text-center">
                     No condos found. Add your first condo above.
                   </td>
                 </tr>

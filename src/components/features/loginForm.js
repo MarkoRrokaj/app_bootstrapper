@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { auth, firestore } from "@/app/firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { auth } from "@/app/firebase/config";
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
@@ -17,33 +16,9 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // Function to check if user has admin role
-  const checkAdminRole = async (userId) => {
-    try {
-      const userDocRef = doc(firestore, "users", userId);
-      const userDoc = await getDoc(userDocRef);
-
-      if (userDoc.exists() && userDoc.data().role === "admin") {
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error("Error checking admin role:", err);
-      return false;
-    }
-  };
-
-  // Handle routing based on user role
-  const handleRouteAfterLogin = async (user) => {
-    const isAdmin = await checkAdminRole(user.uid);
-
-    if (isAdmin) {
-      router.push("/admin");
-    } else {
-      setError("Access denied. You do not have admin privileges.");
-      // Optionally redirect non-admin users to a different page
-      //router.push("/");
-    }
+  // Handle routing after successful login
+  const handleRouteAfterLogin = () => {
+    router.push("/admin"); // Redirect to the home page or dashboard
   };
 
   // Handle email/password login
@@ -64,8 +39,8 @@ const LoginForm = () => {
       setEmail("");
       setPassword("");
 
-      // Check role and route accordingly
-      await handleRouteAfterLogin(userCredential.user);
+      // Redirect user after successful login
+      handleRouteAfterLogin();
     } catch (err) {
       console.error("Login error:", err.code, err.message);
       // Handle specific error cases
@@ -100,8 +75,8 @@ const LoginForm = () => {
       const result = await signInWithPopup(auth, provider);
       console.log("Google login successful:", result.user.email);
 
-      // Check role and route accordingly
-      await handleRouteAfterLogin(result.user);
+      // Redirect user after successful login
+      handleRouteAfterLogin();
     } catch (err) {
       console.error("Google login error:", err);
       setError("Failed to sign in with Google. Please try again.");
